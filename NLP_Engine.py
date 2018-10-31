@@ -1,10 +1,11 @@
 import nltk
 import regex as re
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 class NLP(object):
 
     def __init__(self):
-        pass
+        self.sid = SentimentIntensityAnalyzer()
 
     def clean_data(self, text):
         pass
@@ -24,6 +25,18 @@ class NLP(object):
         leaves = [subtree for subtree in tree.subtrees(filter = lambda t: t.label() in tag_list)]
         print(leaves)
 
+    def fragment_score(self,fragment):
+        words = " ".join([word[0] for word in fragment])
+
+        ss = self.sid.polarity_scores(words)
+        if ss["compound"] > 0.6:
+            return "SP"
+        elif ss["compound"] > 0:
+            return "WP"
+        elif ss["compound"] > -0.6:
+            return "WN"
+        else:
+            return "SN"
 
 
 nlp = NLP()
