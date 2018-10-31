@@ -1,10 +1,11 @@
 import nltk
 import regex as re
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 class NLP(object):
 
     def __init__(self):
-        pass
+        self.sid = SentimentIntensityAnalyzer()
 
     def clean_data(self, text):
         #remove emojis
@@ -29,6 +30,18 @@ class NLP(object):
         objects = [object for object,tag in leaves]
         print(objects)
 
+    def fragment_score(self,fragment):
+        words = " ".join([word[0] for word in fragment])
+
+        ss = self.sid.polarity_scores(words)
+        if ss["compound"] > 0.6:
+            return "SP"
+        elif ss["compound"] > 0:
+            return "WP"
+        elif ss["compound"] > -0.6:
+            return "WN"
+        else:
+            return "SN"
 
 
 nlp = NLP()
