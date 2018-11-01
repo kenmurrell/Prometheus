@@ -34,3 +34,4 @@ MANIFEST
 # Others
 *.pyc
 test.py
+.idea/

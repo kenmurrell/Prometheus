@@ -3,6 +3,7 @@ import regex as re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import itertools
 
+
 class NLP(object):
 
     def __init__(self):
@@ -15,49 +16,45 @@ class NLP(object):
                                                    (?<![\.])
                                                    (but|yet).)""", re.IGNORECASE | re.VERBOSE)
         text = re.sub(coordinating_conjunctions, ".", text)
-        propositions_
         return text
         # sample = pattern.split(r'', sample)
         # remove emojis
         # remove special characters and symbols
         # break buts
 
-    def get_objects(self,text):
-        sentences = nltk.sent_tokenize(text)
-        review_objects = []
-        for sentence in sentences:
-            tokens = nltk.word_tokenize(sentence)
-            tagged = nltk.pos_tag(tokens)
-            print(tagged)
-            # ? 0 or 1
-            # * 0 or many
-            # + 1 or many
-            grammar = r"""
-            A: {<DT><JJ>*<NN>*<VBZ><RB>?<DT><JJ>*<NN>*} #the object should be the last noun
-            B: {<DT><JJ>*<NN>*<VBZ><RB>?<JJ>(<CC><JJ>)?} #the object should be the first noun
-            C: {(<JJ>*<NN>+)+} # the object should be the only noun
-            D: {(^<VB.*><DT><JJ>*<NN>)+} # the object should be the first noun
-            E: {<PRP><VBZ><RB>?<DT><JJ>*<NN>+} # the object should be the last noun
-            ADNOUN: {<J.+>+<N.+>}
-            NOUNAD: {<N.+><J.+>+}
-            ADVB:   {<J.+>+<VB.?>+}
-            ADVBP:  {<RB.?>+<VB.?>+}
-            """
-            cp = nltk.RegexpParser(grammar)
-            tree = cp.parse(tagged)
-            sentence_objects = self.confirm_type(tree)
-            review_objects.append((sentence, sentence_objects))
+    def sentence_splitter(self, sentences):
+        return nltk.sent_tokenize(sentences)
 
-        return review_objects
+    def get_objects(self, sentence):
+        tokens = nltk.word_tokenize(sentence)
+        tagged = nltk.pos_tag(tokens)
+        # ? 0 or 1
+        # * 0 or many
+        # + 1 or many
+        grammar = r"""
+        A: {<DT><JJ>*<NN>*<VBZ><RB>?<DT><JJ>*<NN>*} #the object should be the last noun
+        B: {<DT><JJ>*<NN>*<VBZ><RB>?<JJ>(<CC><JJ>)?} #the object should be the first noun
+        C: {(<JJ>*<NN>+)+} # the object should be the only noun
+        D: {(^<VB.*><DT><JJ>*<NN>)+} # the object should be the first noun
+        E: {<PRP><VBZ><RB>?<DT><JJ>*<NN>+} # the object should be the last noun
+        ADNOUN: {<J.+>+<N.+>}
+        NOUNAD: {<N.+><J.+>+}
+        ADVB:   {<J.+>+<VB.?>+}
+        ADVBP:  {<RB.?>+<VB.?>+}
+        """
+        cp = nltk.RegexpParser(grammar)
+        tree = cp.parse(tagged)
+        sentence_objects = self.confirm_type(tree)
+        return sentence_objects
 
     def confirm_type(self, tree):
         objects = []
-        filter = lambda a, b: a.label() == b
-        type_A = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "A")]
-        type_B = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "B")]
-        type_C = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "C")]
-        type_D = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "D")]
-        type_E = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "E")]
+        example_filter = lambda a, b: a.label() == b
+        type_A = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "A")]
+        type_B = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "B")]
+        type_C = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "C")]
+        type_D = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "D")]
+        type_E = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "E")]
         if len(type_A):
             objects.extend([val for val, tag in list(itertools.chain(*type_A)) if tag == "NN"])
         elif len(type_B):
@@ -72,14 +69,9 @@ class NLP(object):
             return 0
         return objects
 
-
-
-    def fragment_score(self,fragment):
-        # words = " ".join([word for word, tag in fragment])
-
-        # ss = self.sid.polarity_scores(words)
-
-        ss = self.sid.polarity_scores(fragment)
+    def fragment_score(self,sentence):
+        # send a sentence, receive a score
+        ss = self.sid.polarity_scores(sentence)
         if ss["compound"] > 0.6:
             return "SP"
         elif ss["compound"] > 0.1:
@@ -91,7 +83,7 @@ class NLP(object):
         else:
             return "SN"
 
-    def test(self,fragment):
+    def test(self, fragment):
         # words = " ".join([word for word, tag in fragment])
 
         # ss = self.sid.polarity_scores(words)
