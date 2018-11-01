@@ -75,8 +75,10 @@ class NLP(object):
         ss = self.sid.polarity_scores(fragment) # remove
         if ss["compound"] > 0.6:
             return "SP"
-        elif ss["compound"] > 0:
+        elif ss["compound"] > 0.1:
             return "WP"
+        elif ss["compound"] > -0.1:
+            return "NEUTRAL"
         elif ss["compound"] > -0.6:
             return "WN"
         else:
