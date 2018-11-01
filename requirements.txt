@@ -1,0 +1,4 @@
+Prometheus
+psycopg2==2.7.5
+nltk==3.3
+regex==2018.1.10
