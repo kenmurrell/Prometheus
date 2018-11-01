@@ -1,6 +1,7 @@
 import psycopg2
 import regex as re
 
+
 # NOTE: the table name is "review" you dont need to specify the database name
 def retrieve(query):
     try:
