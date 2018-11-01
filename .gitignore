@@ -31,7 +31,8 @@ MANIFEST
 *.manifest
 *.spec
 
-# Others
+# Specific files
 *.pyc
 test.py
 .idea
+*.ini
