@@ -10,7 +10,7 @@ class Processor:
         self.nlp = NLP_Engine.NLP()
 
     def process_since_last(self):
-        products = DataManager.getProducts()  # get all products (real implementation, make it 'per client' loop)
+        products = DataManager.get_products("6")  # get all products (real implementation, make it 'per client' loop)
         for product in products:
             pass
             last_run = datetime.date.today() - datetime.timedelta(days=1)
@@ -41,10 +41,9 @@ class Processor:
                         object_scores[review_rating-1][entity] = values
 
             #  new scores for product calculated here. then write to database
-            for rating in range(1,5):
-                for entity, scores in object_scores[rating]:
-                    pass
-                    #  DataManager.store_scores(current_run, entity, product_id, rating, scores)
+            for rating in range(1, 5):
+                for entity, scores in object_scores[rating-1]:
+                    DataManager.save_scores(current_run, entity, product, rating, scores)
             #  object_scores format, list of 5 elements, one element for each rating.
             #       each element is a map of word -> map of the scores
             #  DataManager.store_scores(product, current_run, object_scores)
