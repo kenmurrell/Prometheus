@@ -2,6 +2,13 @@ import psycopg2
 import regex as re
 import datetime
 
+DB_NAME_PROD = "assortment"
+DB_USER_PROD = "assortment_readonly_user"
+
+
+DB_NAME_DEV = "assortment"
+DB_USER_DEV = "assortment_user"
+
 
 # NOTE: the table name is "review" you dont need to specify the database name
 def _add_limit(query):
@@ -10,12 +17,12 @@ def _add_limit(query):
     return query
 
 
-def _connect():
+def _connect(name, user, password, host):
     try:
-        conn = psycopg2.connect(database="assortment",
-                                user="assortment_readonly_user",
-                                password="I82aOqmZNwj4fIrH",
-                                host="core-prod-gameplan-rds.360pi.com",
+        conn = psycopg2.connect(database=name,
+                                user=user,
+                                password=password,
+                                host=host,
                                 port="5432")
         return conn
     except psycopg2.Error as e:
@@ -25,7 +32,7 @@ def _connect():
 
 
 def get_products(client_id):
-    with _connect() as conn:
+    with _connect(DB_NAME_PROD, DB_USER_PROD, DB_PASSWORD_PROD, DB_HOSTNAME_PROD) as conn:
         cur = conn.cursor()
         query = "SELECT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(client_id=str(client_id))
         try:
