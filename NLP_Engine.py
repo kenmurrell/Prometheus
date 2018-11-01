@@ -1,17 +1,26 @@
 import nltk
 import regex as re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import itertools
 
 class NLP(object):
 
     def __init__(self):
         self.sid = SentimentIntensityAnalyzer()
 
-    def clean_data(self, text):
+    @staticmethod
+    def clean_data(text):
+        # split sentences with contrasting ideas
+        coordinating_conjunctions = re.compile(r"""((?<![\.][\s])
+                                                   (?<![\.])
+                                                   (but|yet).)""", re.IGNORECASE | re.VERBOSE)
+        text = re.sub(coordinating_conjunctions, ".", text)
+        propositions_
+        return text
+        # sample = pattern.split(r'', sample)
         # remove emojis
         # remove special characters and symbols
         # break buts
-        pass
 
     def get_objects(self,text):
         sentences = nltk.sent_tokenize(text)
@@ -24,6 +33,11 @@ class NLP(object):
             # * 0 or many
             # + 1 or many
             grammar = r"""
+            A: {<DT><JJ>*<NN>*<VBZ><RB>?<DT><JJ>*<NN>*} #the object should be the last noun
+            B: {<DT><JJ>*<NN>*<VBZ><RB>?<JJ>(<CC><JJ>)?} #the object should be the first noun
+            C: {(<JJ>*<NN>+)+} # the object should be the only noun
+            D: {(^<VB.*><DT><JJ>*<NN>)+} # the object should be the first noun
+            E: {<PRP><VBZ><RB>?<DT><JJ>*<NN>+} # the object should be the last noun
             ADNOUN: {<J.+>+<N.+>}
             NOUNAD: {<N.+><J.+>+}
             ADVB:   {<J.+>+<VB.?>+}
@@ -31,19 +45,41 @@ class NLP(object):
             """
             cp = nltk.RegexpParser(grammar)
             tree = cp.parse(tagged)
-            tag_list = ["ADNOUN", "NOUNAD", "ADVB", "ADVBP"]
-            leaves = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() in tag_list)]
-
-            subject_tags = ["NN", "NNS", "NNP","NNPS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"]
-            sentence_objects = [word[0] for leaf in leaves for word in leaf if word[1] in subject_tags]
+            sentence_objects = self.confirm_type(tree)
             review_objects.append((sentence, sentence_objects))
 
         return review_objects
 
-    def fragment_score(self,fragment):
-        words = " ".join([word[0] for word in fragment])
+    def confirm_type(self, tree):
+        objects = []
+        filter = lambda a, b: a.label() == b
+        type_A = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "A")]
+        type_B = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "B")]
+        type_C = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "C")]
+        type_D = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "D")]
+        type_E = [subtree.leaves() for subtree in tree.subtrees(filter = lambda t: t.label() == "E")]
+        if len(type_A):
+            objects.extend([val for val, tag in list(itertools.chain(*type_A)) if tag == "NN"])
+        elif len(type_B):
+            objects.extend([val for val, tag in list(itertools.chain(*type_B)) if tag == "NN"])
+        elif len(type_C):
+            objects.extend([val for val, tag in list(itertools.chain(*type_C)) if tag == "NN"])
+        elif len(type_D):
+            objects.extend([val for val, tag in list(itertools.chain(*type_D)) if tag == "NN"])
+        elif len(type_E):
+            objects.extend([val for val, tag in list(itertools.chain(*type_E)) if tag == "NN"])
+        else:
+            return 0
+        return objects
 
-        ss = self.sid.polarity_scores(words)
+
+
+    def fragment_score(self,fragment):
+        # words = " ".join([word for word, tag in fragment])
+
+        # ss = self.sid.polarity_scores(words)
+
+        ss = self.sid.polarity_scores(fragment)
         if ss["compound"] > 0.6:
             return "SP"
         elif ss["compound"] > 0.1:
@@ -55,8 +91,12 @@ class NLP(object):
         else:
             return "SN"
 
+    def test(self,fragment):
+        # words = " ".join([word for word, tag in fragment])
 
-nlp = NLP()
-text = "These are OK. Cut great. The rubber-like grips inside the plastic handles help with precise cutting but make the handles tighter than typical scissors handles. I have small hands and even I find them a bit tight. I would do better with a size larger scissors than I'd normally use. Also, the rubber-like material was flawed inside on of the scissors, but it works fine. Just cosmetic."
-objects = nlp.get_objects(text)
-print(objects)
+        # ss = self.sid.polarity_scores(words)
+
+        ss = self.sid.polarity_scores(fragment) # remove
+        return ss["compound"]
+
+
