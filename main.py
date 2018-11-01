@@ -1,6 +1,10 @@
+import Processor
+
 
 def main():
-    print("Ken is a smelly goober")
+    proc = Processor.Processor()
+    proc.process_since_last()
+
 
 if __name__ == "__main__":
     main()

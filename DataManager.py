@@ -40,7 +40,7 @@ def _connect(name, user, password, host):
 def get_products(client_id):
     with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "SELECT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(
+        query = "SELECT DISTINCT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(
             client_id=str(client_id))
         try:
             cur.execute(query)
@@ -51,26 +51,26 @@ def get_products(client_id):
             return None
 
 
-def get_reviews(prod_id, date1, date2):
+def get_reviews(product_id, last_run, curr):
     with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "SELECT review_text, rating FROM review WHERE root_channel_product_id={prod_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
-            prod_id=prod_id,
-            date1=date1.strftime('%Y-%m-%d'),
-            date2=date2.strftime('%Y-%m-%d'))
+        query = "SELECT review_text, rating FROM review WHERE root_channel_product_id={product_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
+            product_id=product_id,
+            date1=last_run.strftime('%Y-%m-%d'),
+            date2=curr.strftime('%Y-%m-%d'))
         try:
             cur.execute(_add_limit(query))
             rows = cur.fetchall()
             return rows
         except psycopg2.Error as e:
-            print (e.pgerror)
+            print(e.pgerror)
             return None
 
 
 def save_scores(timestamp, entity, productid, rating, scores):
     with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "INSERT INTO review_results(ts, object, productid, rating, sp, wp, wn, sn) VALUES {0},{1},{2},{3},{4},{5},{6},{7}".format(
+        query = "INSERT INTO review_results(ts, object, productid, rating, sp, wp, wn, sn) VALUES ('{0}','{1}',{2},{3},{4},{5},{6},{7})".format(
             timestamp,
             entity,
             productid,
@@ -81,9 +81,12 @@ def save_scores(timestamp, entity, productid, rating, scores):
             scores["SN"])
         try:
             cur.execute(query)
-            cur.commit()
+            conn.commit()
+            # id = cur.fetchone()[0]
+            cur.close()
         except psycopg2.Error as e:
-            print (e.pgerror)
+            pass
+            print(e.pgcode)
 
 
-print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))
+# print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))
