@@ -59,7 +59,7 @@ def get_reviews(prod_id, date1, date2):
             date1=date1.strftime('%Y-%m-%d'),
             date2=date2.strftime('%Y-%m-%d'))
         try:
-            cur.execute(query)
+            cur.execute(_add_limit(query))
             rows = cur.fetchall()
             return rows
         except psycopg2.Error as e:
