@@ -5,16 +5,15 @@ import datetime
 
 config = configparser.ConfigParser()
 config.read("config.ini")
-DB_NAME_PROD = "assortment"
-DB_USER_PROD = "assortment_readonly_user"
-DB_PASSWORD_PROD = config['PROD']['PASSWORD']
-DB_HOSTNAME_PROD = config['PROD']['HOSTNAME']
+PROD_NAME = "assortment"
+PROD_USER = "assortment_readonly_user"
+PROD_PASSWORD = config['PROD']['PASSWORD']
+PROD_HOSTNAME = config['PROD']['HOSTNAME']
 
-
-DB_NAME_DEV = "assortment"
-DB_USER_DEV = "assortment_user"
-DB_PASSWORD_DEV = config['DEV']['PASSWORD']
-DB_HOSTNAME_DEV = config['DEV']['HOSTNAME']
+DEV_NAME = "assortment"
+DEV_USER = "assortment_user"
+DEV_PASSWORD = config['DEV']['PASSWORD']
+DEV_HOSTNAME = config['DEV']['HOSTNAME']
 
 
 # NOTE: the table name is "review" you dont need to specify the database name
@@ -39,9 +38,10 @@ def _connect(name, user, password, host):
 
 
 def get_products(client_id):
-    with _connect(DB_NAME_PROD, DB_USER_PROD, DB_PASSWORD_PROD, DB_HOSTNAME_PROD) as conn:
+    with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "SELECT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(client_id=str(client_id))
+        query = "SELECT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(
+            client_id=str(client_id))
         try:
             cur.execute(query)
             rows = cur.fetchall()
@@ -52,11 +52,12 @@ def get_products(client_id):
 
 
 def get_reviews(prod_id, date1, date2):
-    with _connect(DB_NAME_PROD, DB_USER_PROD, DB_PASSWORD_PROD, DB_HOSTNAME_PROD) as conn:
+    with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "SELECT review_text FROM review WHERE root_channel_product_id={prod_id} AND ts >= '{date1}' AND ts < '{date2}'".format(prod_id=prod_id,
-                                                                                                                                   date1=date1.strftime('%Y-%m-%d'),
-                                                                                                                                   date2=date2.strftime('%Y-%m-%d'))
+        query = "SELECT review_text, rating FROM review WHERE root_channel_product_id={prod_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
+            prod_id=prod_id,
+            date1=date1.strftime('%Y-%m-%d'),
+            date2=date2.strftime('%Y-%m-%d'))
         try:
             cur.execute(query)
             rows = cur.fetchall()
@@ -64,6 +65,25 @@ def get_reviews(prod_id, date1, date2):
         except psycopg2.Error as e:
             print (e.pgerror)
             return None
+
+
+def save_scores(timestamp, entity, productid, rating, scores):
+    with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
+        cur = conn.cursor()
+        query = "INSERT INTO review_results(ts, object, productid, rating, sp, wp, wn, sn) VALUES {0},{1},{2},{3},{4},{5},{6},{7}".format(
+            timestamp,
+            entity,
+            productid,
+            rating,
+            scores["SP"],
+            scores["WP"],
+            scores["WN"],
+            scores["SN"])
+        try:
+            cur.execute(query)
+            cur.commit()
+        except psycopg2.Error as e:
+            print (e.pgerror)
 
 
 print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))
