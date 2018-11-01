@@ -17,31 +17,38 @@ class NLP(object):
         text = re.sub(coordinating_conjunctions, ".", text)
         propositions_
         return text
+        # sample = pattern.split(r'', sample)
+        # remove emojis
+        # remove special characters and symbols
+        # break buts
 
-        #sample = pattern.split(r'', sample)
-        #remove emojis
-        #remove special characters and symbols
-        #break buts
+    def get_objects(self,text):
+        sentences = nltk.sent_tokenize(text)
+        review_objects = []
+        for sentence in sentences:
+            tokens = nltk.word_tokenize(sentence)
+            tagged = nltk.pos_tag(tokens)
+            print(tagged)
+            # ? 0 or 1
+            # * 0 or many
+            # + 1 or many
+            grammar = r"""
+            A: {<DT><JJ>*<NN>*<VBZ><RB>?<DT><JJ>*<NN>*} #the object should be the last noun
+            B: {<DT><JJ>*<NN>*<VBZ><RB>?<JJ>(<CC><JJ>)?} #the object should be the first noun
+            C: {(<JJ>*<NN>+)+} # the object should be the only noun
+            D: {(^<VB.*><DT><JJ>*<NN>)+} # the object should be the first noun
+            E: {<PRP><VBZ><RB>?<DT><JJ>*<NN>+} # the object should be the last noun
+            ADNOUN: {<J.+>+<N.+>}
+            NOUNAD: {<N.+><J.+>+}
+            ADVB:   {<J.+>+<VB.?>+}
+            ADVBP:  {<RB.?>+<VB.?>+}
+            """
+            cp = nltk.RegexpParser(grammar)
+            tree = cp.parse(tagged)
+            sentence_objects = self.confirm_type(tree)
+            review_objects.append((sentence, sentence_objects))
 
-        pass
-
-    def get_objects(self, text):
-        tokens = nltk.word_tokenize(text)
-        tagged = nltk.pos_tag(tokens)
-        # ? 0 or 1
-        # * 0 or many
-        # + 1 or many
-        grammar = r"""
-        A: {<DT><JJ>*<NN>*<VBZ><RB>?<DT><JJ>*<NN>*} #the object should be the last noun
-        B: {<DT><JJ>*<NN>*<VBZ><RB>?<JJ>(<CC><JJ>)?} #the object should be the first noun
-        C: {(<JJ>*<NN>+)+} # the object should be the only noun
-        D: {(^<VB.*><DT><JJ>*<NN>)+} # the object should be the first noun
-        E: {<PRP><VBZ><RB>?<DT><JJ>*<NN>+} # the object should be the last noun
-        """
-        cp = nltk.RegexpParser(grammar)
-        tree = cp.parse(tagged)
-        objects = self.confirm_type(tree)
-        return objects
+        return review_objects
 
     def confirm_type(self, tree):
         objects = []
@@ -66,13 +73,13 @@ class NLP(object):
         return objects
 
 
-        
+
     def fragment_score(self,fragment):
         # words = " ".join([word for word, tag in fragment])
 
         # ss = self.sid.polarity_scores(words)
 
-        ss = self.sid.polarity_scores(fragment) # remove
+        ss = self.sid.polarity_scores(fragment)
         if ss["compound"] > 0.6:
             return "SP"
         elif ss["compound"] > 0.1:
