@@ -16,6 +16,7 @@ class NLP(object):
                                                    (?<![\.])
                                                    (but|yet).)""", re.IGNORECASE | re.VERBOSE)
         text = re.sub(coordinating_conjunctions, ".", text)
+        reflexive_pronoun = re.compile
         return text
         # sample = pattern.split(r'', sample)
         # remove emojis
