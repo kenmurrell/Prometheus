@@ -26,13 +26,13 @@ class Processor:
                 sentences = self.nlp.sentence_splitter(cleaned)
                 review_scores = {}  # stores scores for all objects in the current review
                 for sentence in sentences:
-                    if self.nlp.isEmpty(sentence):
+                    if(self.nlp.is_empty(sentence)):
                         continue
                     extracted_entities = self.nlp.get_objects(sentence)
                     score = self.nlp.fragment_score(sentence)
                     if score == "NEUTRAL":
                         continue  # ignore neutral sentiments, irrelevant
-                    for entity in extracted_entities:  # add/ scores from this sentence to compound review scores
+                    for entity in extracted_entities:  # add scores from this sentence to compound review scores
                         if entity not in review_scores.keys():
                             review_scores[entity] = {"SP": 0, "WP": 0, "WN": 0, "SN": 0}
                         review_scores[entity][score] += 1
@@ -48,6 +48,8 @@ class Processor:
             for rating in range(1, 5):
                 for entity, scores in object_scores[rating-1].items():
                     DataManager.save_scores(current_run, entity, product, rating, scores)
+
+            DataManager.update_last_run()
             #  object_scores format, list of 5 elements, one element for each rating.
             #       each element is a map of word -> map of the scores
             #  DataManager.store_scores(product, current_run, object_scores)
