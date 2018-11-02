@@ -4,7 +4,7 @@ import configparser
 import datetime
 
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read("connection_cfg.ini")
 PROD_NAME = "assortment"
 PROD_USER = "assortment_readonly_user"
 PROD_PASSWORD = config['PROD']['PASSWORD']
@@ -14,6 +14,22 @@ DEV_NAME = "assortment"
 DEV_USER = "assortment_user"
 DEV_PASSWORD = config['DEV']['PASSWORD']
 DEV_HOSTNAME = config['DEV']['HOSTNAME']
+
+
+def _update_last_run():
+    config = configparser.ConfigParser()
+    with open("lastrun_cfg.ini", "w") as cfgfile:
+        d = datetime.datetime.now()
+        config.add_section("PERSISTENCE")
+        config.set("PERSISTENCE", "last_run", d.strftime("%Y-%m-%d %H:%M:%S"))
+        config.write(cfgfile)
+
+
+def get_last_run():
+    config = configparser.ConfigParser()
+    config.read("lastrun_cfg.ini")
+    last_run = config['PERSISTENCE']['last_run']
+    return datetime.datetime.strptime(last_run, "%Y-%m-%d %H:%M:%S")
 
 
 # NOTE: the table name is "review" you dont need to specify the database name
@@ -90,3 +106,5 @@ def save_scores(timestamp, entity, productid, rating, scores):
 
 
 # print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))
+_update_last_run()
+print(get_last_run())
