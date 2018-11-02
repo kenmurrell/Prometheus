@@ -20,9 +20,11 @@ class Processor:
         print("\n" + str(len(reviews)) + " reviews found")
         print("Last run: " + str(DataManager.get_last_run()))
         print("Processing reviews: ")
+        product_scores = {}  # stores scores across all reviews for this product
+        # list of rating groups.
+        # each group, contains dict of product_id -> dict of entities -> dict of scores
         for review in tqdm(reviews):
-            object_scores = [{}, {}, {}, {}, {}]  # stores scores across all reviews for this product
-
+            product_id = int(review[0])
             review_text = review[1]
             if review_text is None:
                 continue
@@ -40,18 +42,22 @@ class Processor:
                         review_scores[entity] = {"SP": 0, "WP": 0, "WN": 0, "SN": 0}
                     review_scores[entity][score] += 1
 
-            for entity, values in review_scores.items():  # merge into object_scores.
-                if entity in object_scores[review_rating-1].keys():
-                    object_scores[review_rating-1][entity] = Counter(object_scores[review_rating-1][entity]) + \
-                                                           Counter(review_scores[entity])
+            if product_id not in product_scores.keys():
+                product_scores[product_id] = [{}, {}, {}, {}, {}]
+            for entity, values in review_scores.items():  # merge into product_scores.
+                if entity in product_scores[product_id][review_rating-1].keys():
+                    product_scores[product_id][review_rating-1][entity] = \
+                        Counter(product_scores[product_id][review_rating-1][entity]) + Counter(values)
                 else:
-                    object_scores[review_rating-1][entity] = values
+                    product_scores[product_id][review_rating-1][entity] = values
 
-            #  new scores for product calculated here. then write to database
+        #  new scores for all reviews calculated here. then write to database
+        for product_id, entities_by_rating in tqdm(product_scores.items()):
             for rating in range(1, 5):
-                for entity, scores in object_scores[rating-1].items():
-                    DataManager.save_scores(current_run, entity, review[0], rating, scores)
+                for entity, scores in entities_by_rating[rating].items():
+                    DataManager.save_scores(current_run, entity, product_id, rating, scores)
             DataManager.update_last_run()
-            #  object_scores format, list of 5 elements, one element for each rating.
-            #       each element is a map of word -> map of the scores
-            #  DataManager.store_scores(product, current_run, object_scores)
+        #  object_scores format, list of 5 elements, one element for each rating.
+        #       each element is a map of word -> map of the scores
+        #  DataManager.store_scores(product, current_run, object_scores)
+
