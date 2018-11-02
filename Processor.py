@@ -14,6 +14,9 @@ class Processor:
         print("Getting product list...")
         products = DataManager.get_products("6977")  # get all products (real implementation, make it 'per client' loop)
         products = [product[0] for product in products]
+        print("\n"+str(len(products)) + " products found")
+        print("Last run: "+str(DataManager.get_last_run()))
+        print("Processing reviews: ")
         for product in tqdm(products):
             last_run = datetime.date.today() - datetime.timedelta(days=prev)
             current_run = datetime.date.today()
