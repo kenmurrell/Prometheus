@@ -69,22 +69,6 @@ def get_reviews(client_id, last_run, current_run):
             return None
 
 
-def get_reviews_old(product_id, last_run, curr):
-    with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
-        cur = conn.cursor()
-        query = "SELECT review_text, rating FROM review WHERE root_channel_product_id={product_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
-            product_id=product_id,
-            date1=last_run.strftime('%Y-%m-%d'),
-            date2=curr.strftime('%Y-%m-%d'))
-        try:
-            cur.execute(_add_limit(query))
-            rows = cur.fetchall()
-            return rows
-        except psycopg2.Error as e:
-            print(e.pgerror)
-            return None
-
-
 def save_scores(timestamp, entity, productid, rating, scores):
     with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
         cur = conn.cursor()
@@ -106,5 +90,18 @@ def save_scores(timestamp, entity, productid, rating, scores):
             pass
             print(e.pgcode)
 
+
+def _reset_table():
+    with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
+        cur = conn.cursor()
+        query = "DELETE from review_results"
+        try:
+            cur.execute(query)
+            conn.commit()
+            # id = cur.fetchone()[0]
+            cur.close()
+        except psycopg2.Error as e:
+            pass
+            print(e.pgcode)
 
 # print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))

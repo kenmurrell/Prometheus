@@ -11,13 +11,14 @@ class Processor:
         self.nlp = NLP_Engine.NLP()
 
     def process_since_last(self, prev = 365):
-        print("Getting product list...")
+        print("Getting product and review list...")
         current_run = datetime.datetime.today()
         last_run = current_run-datetime.timedelta(days=prev)
-        reviews = DataManager.get_reviews("6977", last_run, current_run)
+        channel = "6977"
+        reviews = DataManager.get_reviews(channel, last_run, current_run)
         # get all products (real implementation, make it 'per client' loop)
         # reviews format, collection of (productID, review_text, rating)
-        print("\n" + str(len(reviews)) + " reviews found")
+        print("\n" + str(len(reviews)) + " reviews found for channel "+channel)
         print("Last run: " + str(DataManager.get_last_run()))
         print("Processing reviews: ")
         for review in tqdm(reviews):
