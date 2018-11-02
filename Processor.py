@@ -22,8 +22,8 @@ class Processor:
         print("Last run: " + str(DataManager.get_last_run()))
         print("Processing reviews: ")
         product_scores = {}  # stores scores across all reviews for this product
-        # list of rating groups.
-        # each group, contains dict of product_id -> dict of entities -> dict of scores
+        # dict of product_id -> list of 5 elements (1 per rating tier)
+        # each element is a -> dict of entities -> dict of scores
         for review in tqdm(reviews):
             product_id = int(review[0])
             review_text = review[1]
