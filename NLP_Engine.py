@@ -27,7 +27,14 @@ class NLP(object):
         # remove special characters and symbols
         # break buts
 
-    def sentence_splitter(self, sentences):
+    @staticmethod
+    def isEmpty(sentence):
+        garbage = re.compile(r"[\W|\d]", re.VERBOSE)
+        rm = re.sub(garbage, "", sentence)
+        return len(sentence) == 0
+
+    @staticmethod
+    def sentence_splitter(sentences):
         return nltk.sent_tokenize(sentences)
 
     def get_objects(self, sentence):

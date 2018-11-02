@@ -16,7 +16,7 @@ DEV_PASSWORD = config['DEV']['PASSWORD']
 DEV_HOSTNAME = config['DEV']['HOSTNAME']
 
 
-def _update_last_run():
+def update_last_run():
     config = configparser.ConfigParser()
     with open("lastrun_cfg.ini", "w") as cfgfile:
         d = datetime.datetime.now()
