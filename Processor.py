@@ -17,6 +17,9 @@ class Processor:
         reviews = DataManager.get_reviews("6977", last_run, current_run)
         # get all products (real implementation, make it 'per client' loop)
         # reviews format, collection of (productID, review_text, rating)
+        print("\n" + str(len(reviews)) + " reviews found")
+        print("Last run: " + str(DataManager.get_last_run()))
+        print("Processing reviews: ")
         for review in tqdm(reviews):
             object_scores = [{}, {}, {}, {}, {}]  # stores scores across all reviews for this product
 
