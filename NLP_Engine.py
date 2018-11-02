@@ -10,6 +10,7 @@ class NLP(object):
 
     def __init__(self):
         self.sid = SentimentIntensityAnalyzer()
+        self.stemmer = nltk.stem.porter.PorterStemmer()
 
     @staticmethod
     def clean_data(text):
@@ -22,10 +23,6 @@ class NLP(object):
         reflexive_pronoun = re.compile(r"""[^\d\w]i[^\d\w]""")
         text = re.sub(reflexive_pronoun, "I", text)
         return text
-        # sample = pattern.split(r'', sample)
-        # remove emojis
-        # remove special characters and symbols
-        # break buts
 
     @staticmethod
     def isEmpty(sentence):
@@ -37,8 +34,8 @@ class NLP(object):
     def sentence_splitter(sentences):
         return nltk.sent_tokenize(sentences)
 
-    def get_objects(self, sentence):
-        tokens = nltk.word_tokenize(sentence)
+    def get_entities(self, sentence):
+        tokens = nltk.word_tokenize(sentence.lower())
         tagged = nltk.pos_tag(tokens)
         # ? 0 or 1
         # * 0 or many
@@ -49,18 +46,20 @@ class NLP(object):
         C: {(<J.+>*<N.+>+)+} # the object should be the only noun
         D: {(^<VB.*><DT><JJ>*<N.+>)+} # the object should be the first noun
         E: {<PRP><VB.+><RB>?<DT><JJ>*<N.+>+} # the object should be the last noun
-        ADNOUN: {<J.+>+<N.+>}
-        NOUNAD: {<N.+><J.+>+}
-        ADVB:   {<J.+>+<VB.?>+}
-        ADVBP:  {<RB.?>+<VB.?>+}
         """
+        # ADNOUN: { < J. + > + < N. + >}
+        # NOUNAD: { < N. + > < J. + > +}
+        # ADVB: { < J. + > + < VB.? > +}
+        # ADVBP: { < RB.? > + < VB.? > +}
         cp = nltk.RegexpParser(grammar)
         tree = cp.parse(tagged)
-        sentence_objects = self.confirm_type(tree)
-        return sentence_objects
+        sentence_entities = self.confirm_type(tree)
+        sentence_entities = [self.stemmer.stem(ent) for ent in sentence_entities if self.valid_entity(ent)]
+        return sentence_entities
 
-    def confirm_type(self, tree):
-        objects = []
+    @staticmethod
+    def confirm_type(tree):
+        entities = []
         example_filter = lambda a, b: a.label() == b
         flatten = lambda l: list(itertools.chain(*l))
         type_A: List[Any] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "A")]
@@ -68,19 +67,20 @@ class NLP(object):
         type_C = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "C")]
         type_D = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "D")]
         type_E = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "E")]
+        nouns = ["NN", "NNP", "NNPS", "NNS"]
         if len(type_A):
-            objects.extend([val for val, tag in flatten(type_A) if tag == "NN"])
+            entities.extend([val for val, tag in flatten(type_A) if tag in nouns])
         elif len(type_B):
-            objects.extend([val for val, tag in flatten(type_B) if tag == "NN"])
+            entities.extend([val for val, tag in flatten(type_B) if tag in nouns])
         elif len(type_C):
-            objects.extend([val for val, tag in flatten(type_C) if tag == "NN"])
+            entities.extend([val for val, tag in flatten(type_C) if tag in nouns])
         elif len(type_D):
-            objects.extend([val for val, tag in flatten(type_D) if tag == "NN"])
+            entities.extend([val for val, tag in flatten(type_D) if tag in nouns])
         elif len(type_E):
-            objects.extend([val for val, tag in flatten(type_E) if tag == "NN"])
+            entities.extend([val for val, tag in flatten(type_E) if tag in nouns])
         else:
-            return None
-        return objects
+            return []
+        return entities
 
     def fragment_score(self, sentence):
         # send a sentence, receive a score
@@ -96,10 +96,16 @@ class NLP(object):
         else:
             return "SN"
 
-    def test(self, fragment):
+    @staticmethod
+    def valid_entity(entity):
+        # remove entites with invalid characters and only 1 character
+        garbage = re.compile(r"[\W|\d]")
+        valid1 = not bool(re.findall(garbage, entity))
+        valid2 = len(entity)>1
+        return valid1 and valid2
+
+    def _test(self, fragment):
         # words = " ".join([word for word, tag in fragment])
-
         # ss = self.sid.polarity_scores(words)
-
         ss = self.sid.polarity_scores(fragment)  # remove
         return ss["compound"]

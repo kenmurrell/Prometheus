@@ -14,13 +14,15 @@ class Processor:
         print("Getting product list...")
         products = DataManager.get_products("6977")  # get all products (real implementation, make it 'per client' loop)
         products = [product[0] for product in products]
-        for product in tqdm(products[:50]):  # TODO lol
+        for product in tqdm(products):
             last_run = datetime.date.today() - datetime.timedelta(days=prev)
             current_run = datetime.date.today()
             reviews = DataManager.get_reviews(product, last_run, current_run)
             object_scores = [{}, {}, {}, {}, {}]  # stores scores across all reviews for this product
             for review in reviews:
                 review_text = review[0]
+                if review_text is None:
+                    continue
                 review_rating = int(review[1])
                 cleaned = self.nlp.clean_data(review_text)
                 sentences = self.nlp.sentence_splitter(cleaned)
@@ -28,7 +30,7 @@ class Processor:
                 for sentence in sentences:
                     if self.nlp.isEmpty(sentence):
                         continue
-                    extracted_entities = self.nlp.get_objects(sentence)
+                    extracted_entities = self.nlp.get_entities(sentence)
                     score = self.nlp.fragment_score(sentence)
                     if score == "NEUTRAL":
                         continue  # ignore neutral sentiments, irrelevant
@@ -48,7 +50,6 @@ class Processor:
             for rating in range(1, 5):
                 for entity, scores in object_scores[rating-1].items():
                     DataManager.save_scores(current_run, entity, product, rating, scores)
-
             DataManager.update_last_run()
             #  object_scores format, list of 5 elements, one element for each rating.
             #       each element is a map of word -> map of the scores

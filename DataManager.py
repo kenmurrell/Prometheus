@@ -86,7 +86,7 @@ def get_reviews(product_id, last_run, curr):
 def save_scores(timestamp, entity, productid, rating, scores):
     with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "INSERT INTO review_results(ts, object, productid, rating, sp, wp, wn, sn) VALUES ('{0}','{1}',{2},{3},{4},{5},{6},{7})".format(
+        query = "INSERT INTO review_results(ts, entity, productid, rating, sp, wp, wn, sn) VALUES ('{0}','{1}',{2},{3},{4},{5},{6},{7})".format(
             timestamp,
             entity,
             productid,
@@ -106,5 +106,3 @@ def save_scores(timestamp, entity, productid, rating, scores):
 
 
 # print(get_reviews(605775, (datetime.datetime.today() - datetime.timedelta(days=1000)), datetime.datetime.today()))
-_update_last_run()
-print(get_last_run())
