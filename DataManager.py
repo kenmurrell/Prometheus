@@ -53,11 +53,13 @@ def _connect(name, user, password, host):
         return None
 
 
-def get_products(client_id):
+def get_reviews(client_id, last_run, current_run):
     with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
-        query = "SELECT DISTINCT root_channel_product_id FROM review WHERE channel_id = {client_id}".format(
-            client_id=str(client_id))
+        query = "SELECT root_channel_product_id, review_text, rating FROM review WHERE channel_id = {client_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
+            client_id=str(client_id),
+            date1=last_run.strftime('%Y-%m-%d'),
+            date2=current_run.strftime('%Y-%m-%d'))
         try:
             cur.execute(query)
             rows = cur.fetchall()
@@ -67,7 +69,7 @@ def get_products(client_id):
             return None
 
 
-def get_reviews(product_id, last_run, curr):
+def get_reviews_old(product_id, last_run, curr):
     with _connect(PROD_NAME, PROD_USER, PROD_PASSWORD, PROD_HOSTNAME) as conn:
         cur = conn.cursor()
         query = "SELECT review_text, rating FROM review WHERE root_channel_product_id={product_id} AND ts >= '{date1}' AND ts < '{date2}'".format(
