@@ -25,12 +25,6 @@ class NLP(object):
         return text
 
     @staticmethod
-    def isEmpty(sentence):
-        garbage = re.compile(r"[\W|\d]", re.VERBOSE)
-        rm = re.sub(garbage, "", sentence)
-        return len(sentence) == 0
-
-    @staticmethod
     def sentence_splitter(sentences):
         return nltk.sent_tokenize(sentences)
 
@@ -47,10 +41,6 @@ class NLP(object):
         D: {(^<VB.*><DT><JJ>*<N.+>)+} # the object should be the first noun
         E: {<PRP><VB.+><RB>?<DT><JJ>*<N.+>+} # the object should be the last noun
         """
-        # ADNOUN: { < J. + > + < N. + >}
-        # NOUNAD: { < N. + > < J. + > +}
-        # ADVB: { < J. + > + < VB.? > +}
-        # ADVBP: { < RB.? > + < VB.? > +}
         cp = nltk.RegexpParser(grammar)
         tree = cp.parse(tagged)
         sentence_entities = self.confirm_type(tree)
@@ -60,24 +50,23 @@ class NLP(object):
     @staticmethod
     def confirm_type(tree):
         entities = []
-        example_filter = lambda a, b: a.label() == b
         flatten = lambda l: list(itertools.chain(*l))
-        type_A: List[Any] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "A")]
-        type_B = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "B")]
-        type_C = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "C")]
-        type_D = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "D")]
-        type_E = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "E")]
-        nouns = ["NN", "NNP", "NNPS", "NNS"]
+        type_A: List[tuple] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "A")]
+        type_B: List[tuple] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "B")]
+        type_C: List[tuple] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "C")]
+        type_D: List[tuple] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "D")]
+        type_E: List[tuple] = [subtree.leaves() for subtree in tree.subtrees(filter=lambda t: t.label() == "E")]
+        noun_pattern = ["NN", "NNP", "NNPS", "NNS"]
         if len(type_A):
-            entities.extend([val for val, tag in flatten(type_A) if tag in nouns])
+            entities.extend([val for val, tag in flatten(type_A) if tag in noun_pattern])
         elif len(type_B):
-            entities.extend([val for val, tag in flatten(type_B) if tag in nouns])
+            entities.extend([val for val, tag in flatten(type_B) if tag in noun_pattern])
         elif len(type_C):
-            entities.extend([val for val, tag in flatten(type_C) if tag in nouns])
+            entities.extend([val for val, tag in flatten(type_C) if tag in noun_pattern])
         elif len(type_D):
-            entities.extend([val for val, tag in flatten(type_D) if tag in nouns])
+            entities.extend([val for val, tag in flatten(type_D) if tag in noun_pattern])
         elif len(type_E):
-            entities.extend([val for val, tag in flatten(type_E) if tag in nouns])
+            entities.extend([val for val, tag in flatten(type_E) if tag in noun_pattern])
         else:
             return []
         return entities
@@ -101,11 +90,6 @@ class NLP(object):
         # remove entites with invalid characters and only 1 character
         garbage = re.compile(r"[\W|\d]")
         valid1 = not bool(re.findall(garbage, entity))
-        valid2 = len(entity)>1
+        valid2 = len(entity) > 1
         return valid1 and valid2
 
-    def _test(self, fragment):
-        # words = " ".join([word for word, tag in fragment])
-        # ss = self.sid.polarity_scores(words)
-        ss = self.sid.polarity_scores(fragment)  # remove
-        return ss["compound"]

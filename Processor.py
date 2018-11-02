@@ -31,8 +31,6 @@ class Processor:
             sentences = self.nlp.sentence_splitter(cleaned)
             review_scores = {}  # stores scores for all objects in the current review
             for sentence in sentences:
-                if self.nlp.isEmpty(sentence):
-                    continue
                 extracted_entities = self.nlp.get_entities(sentence)
                 score = self.nlp.fragment_score(sentence)
                 if score == "NEUTRAL":
