@@ -20,7 +20,7 @@ class Processor:
         # get all products (real implementation, make it 'per client' loop)
         # reviews format, collection of (productID, review_text, rating)
         print("\n" + str(len(reviews)) + " reviews found for channel "+channel)
-        print("Last run: " + str(DataManager.get_last_run()))
+        print("\nLast run: " + str(DataManager.get_last_run()))
         print("Processing reviews: ")
         product_scores = {}  # stores scores across all reviews for this product
         # dict of product_id -> list of 5 elements (1 per rating tier)
@@ -59,8 +59,9 @@ class Processor:
             for rating in range(1, 5):
                 for entity, scores in entities_by_rating[rating].items():
                     entity_list.append(Entity(entity,rating,current_run,product_id,scores))
-
+        DataManager.save_scores_batch(entity_list)
         DataManager.update_last_run()
+        print("DONE!")
         #  object_scores format, list of 5 elements, one element for each rating.
         #       each element is a map of word -> map of the scores
         #  DataManager.store_scores(product, current_run, object_scores)

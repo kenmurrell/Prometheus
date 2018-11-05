@@ -2,6 +2,7 @@ import psycopg2
 import regex as re
 import configparser
 import datetime
+import psycopg2.extras
 
 config = configparser.ConfigParser()
 config.read("connection_cfg.ini")
@@ -89,6 +90,23 @@ def save_scores(timestamp, entity, productid, rating, scores):
         except psycopg2.Error as e:
             pass
             print(e.pgcode)
+
+
+def save_scores_batch(entity_list):
+    with _connect(DEV_NAME, DEV_USER, DEV_PASSWORD, DEV_HOSTNAME) as conn:
+        cur = conn.cursor()
+        query = "INSERT INTO review_results(ts, entity, productid, rating, sp, wp, wn, sn) VALUES (%s)"
+        ts = [entity.ts for entity in entity_list]
+        entities = [entity.name for entity in entity_list]
+        productids = [entity.product_id for entity in entity_list]
+        ratings = [entity.rating for entity in entity_list]
+        sp = [entity.sp for entity in entity_list]
+        wp = [entity.wp for entity in entity_list]
+        wn = [entity.wn for entity in entity_list]
+        sn = [entity.sn for entity in entity_list]
+        values = (tuple(ts), tuple(entities), tuple(productids), tuple(ratings), tuple(sp), tuple(wp), tuple(wn), tuple(sn))
+        psycopg2.extras.execute_values(cur, query, values)
+        cur.commit()
 
 
 def _reset_table():
