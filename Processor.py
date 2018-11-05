@@ -1,6 +1,7 @@
 import DataManager
 import NLP_Engine
 import datetime
+from entity import Entity
 from collections import Counter
 from tqdm import tqdm
 
@@ -52,13 +53,16 @@ class Processor:
                 else:
                     product_scores[product_id][review_rating-1][entity] = values
 
+        entity_list = []
         #  new scores for all reviews calculated here. then write to database
         for product_id, entities_by_rating in tqdm(product_scores.items()):
             for rating in range(1, 5):
                 for entity, scores in entities_by_rating[rating].items():
-                    DataManager.save_scores(current_run, entity, product_id, rating, scores)
-            DataManager.update_last_run()
+                    entity_list.append(Entity(entity,rating,current_run,product_id,scores))
+
+        DataManager.update_last_run()
         #  object_scores format, list of 5 elements, one element for each rating.
         #       each element is a map of word -> map of the scores
         #  DataManager.store_scores(product, current_run, object_scores)
+
 
