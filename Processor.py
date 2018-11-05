@@ -10,16 +10,17 @@ class Processor:
     def __init__(self):
         self.nlp = NLP_Engine.NLP()
 
-    def process_since_last(self, prev = 365):
+    def process_since_last(self, last_run=None, channel=0):
         print("Getting product and review list...")
         current_run = datetime.datetime.today()
-        last_run = current_run-datetime.timedelta(days=prev)
-        channel = "6977"
+        if last_run is None:
+            last_run = DataManager.get_last_run()
         reviews = DataManager.get_reviews(channel, last_run, current_run)
         # get all products (real implementation, make it 'per client' loop)
         # reviews format, collection of (productID, review_text, rating)
-        print("\n" + str(len(reviews)) + " reviews found for channel "+channel)
-        print("\nLast run: " + str(DataManager.get_last_run()))
+        print("\n" + str(len(reviews)) + " reviews found for channel " + channel)
+        print("\nLast run: " + str(last_run))
+
         print("Processing reviews: ")
         product_scores = {}  # stores scores across all reviews for this product
         # dict of product_id -> list of 5 elements (1 per rating tier)
