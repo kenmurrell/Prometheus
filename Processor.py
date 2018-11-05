@@ -58,7 +58,7 @@ class Processor:
         for product_id, entities_by_rating in tqdm(product_scores.items()):
             for rating in range(1, 5):
                 for entity, scores in entities_by_rating[rating].items():
-                    entity_list.append(Entity(entity,rating,current_run,product_id,scores))
+                    entity_list.append((current_run, entity, product_id, rating, scores["SP"], scores["WP"], scores["WN"], scores["SN"]))
         DataManager.save_scores_batch(entity_list)
         DataManager.update_last_run()
         print("DONE!")
