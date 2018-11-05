@@ -1,7 +1,6 @@
 import DataManager
 import NLP_Engine
 import datetime
-from entity import Entity
 from collections import Counter
 from tqdm import tqdm
 
